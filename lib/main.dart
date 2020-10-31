@@ -130,7 +130,6 @@ class _HomePageState extends State<HomePage> {
     if (searchString.isEmpty) {
       return;
     }
-
     String accessKey = const String.fromEnvironment("accessKey");
     String getQueryString = 'https://api.unsplash.com/search/photos?query=${searchTermController.text.toString()}&per_page=6&client_id=$accessKey';
     widget.httpClient.get(getQueryString)
