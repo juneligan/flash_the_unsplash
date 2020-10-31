@@ -402,7 +402,7 @@ class _HomePageState extends State<HomePage> {
 
 
   Widget _createCollectionHorizontalList(collectionName, screenSize) {
-    String name = collections[collectionName].isEmpty ? '' : collectionName;
+    String name = collectionName;
     return Column(
         children: [
           Row(children: [
@@ -410,10 +410,10 @@ class _HomePageState extends State<HomePage> {
                 () {},
                 screenSize),
             _createSpacer(screenSize),
-            _createCollectionTextWithPadding(collections[collectionName].isEmpty ? '' :'remove',
+            _createCollectionTextWithPadding('remove',
               () => _deleteCollection(name), screenSize),
             _createSpacer(screenSize),
-            _createCollectionTextWithPadding(collections[collectionName].isEmpty ? '' :'rename',
+            _createCollectionTextWithPadding('rename',
                     () => _renameCollection(name), screenSize),
           ],),
           SingleChildScrollView(
@@ -426,7 +426,7 @@ class _HomePageState extends State<HomePage> {
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: _createCollectionGestures(collectionName, screenSize),
+              children: _createCollectionGestures2(collectionName, screenSize),
             ),
           )
         )]
@@ -538,6 +538,108 @@ class _HomePageState extends State<HomePage> {
           child: _createTileFeatured(e.photographer, e.thumbnailUrl, screenSize)
       );
     }).toList();
+  }
+
+  List<Widget> _createCollectionGestures2(name, screenSize) {
+    return collections[name]
+        .asMap().map((index, e) {
+      return MapEntry(index, GestureDetector(
+          onTap: () {
+            print(e.photographer);
+            _createTransferOrRemoveDialog(index, name, screenSize)
+            .then((value) {
+              List<UnsplashRecord> col;
+              if (value != null && value != name) {
+                final result = value;
+                if (result != 'TO_DELETE') {
+                  UnsplashRecord record = collections[name].elementAt(index);
+                  col = collections[result];
+                  if (col != null) {
+                    col.add(record);
+                  } else {
+                    col = [record];
+                  }
+                  print(col);
+
+                }
+
+                setState(() {
+                  collections[result] = col;
+                  collections[name].removeAt(index);
+                });
+              }
+            });
+          },
+          child: _createTileFeatured(e.photographer, e.thumbnailUrl, screenSize)
+      ));
+    }).values.toList();
+  }
+
+
+  Future _createTransferOrRemoveDialog(index, name, screenSize) {
+    return showDialog(context: context, builder: (context) {
+      return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    //position
+                    mainAxisSize: MainAxisSize.min,
+                    // wrap content in flutter
+                    children: <Widget>[
+
+                      MaterialButton(
+                        onPressed: () {
+                          _deleteCollectionPhoto(index, name, setState)
+                          .then((value) {
+
+                            if (value) {
+                              Navigator.of(context).pop('TO_DELETE');
+                            }
+
+                          });
+                        },
+                        elevation: 5.0,
+                        child: Text('Delete'),
+                      ),
+                      _createSearchCollectionRow(setState, screenSize),
+                      Center(
+                          child: Text(
+                            'Select Collection to transfer the image:',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                      ),
+                      _createCollectionSearchResults(screenSize)
+                    ],
+                  ),
+                )
+            );
+          });
+    });
+  }
+  Future<bool> _deleteCollectionPhoto(index, name, setState) {
+    return showDialog(context: context, builder: (context) {
+      return AlertDialog(
+          title: Text('Are you sure to delete this?'),
+          actions: <Widget>[
+            MaterialButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              elevation: 5.0,
+              child: Text('Yes, Of course.'),
+            ),
+            MaterialButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              elevation: 5.0,
+              child: Text('Nope'),
+            ),
+          ]
+      );
+    });
   }
 
   updateCollection(result) {
