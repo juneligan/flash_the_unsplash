@@ -130,7 +130,9 @@ class _HomePageState extends State<HomePage> {
     if (searchString.isEmpty) {
       return;
     }
-    String getQueryString = 'https://api.unsplash.com/search/photos?query=${searchTermController.text.toString()}&per_page=6&client_id=';
+
+    String accessKey = const String.fromEnvironment("accessKey");
+    String getQueryString = 'https://api.unsplash.com/search/photos?query=${searchTermController.text.toString()}&per_page=6&client_id=$accessKey';
     widget.httpClient.get(getQueryString)
         .then((response) {
 
@@ -410,16 +412,10 @@ class _HomePageState extends State<HomePage> {
                 screenSize),
             _createSpacer(screenSize),
             _createCollectionTextWithPadding(collections[collectionName].isEmpty ? '' :'remove',
-                    () {
-                      setState(() {
-                        collections.remove(name);
-                      });
-                    }, screenSize),
+              () => _deleteCollection(name), screenSize),
             _createSpacer(screenSize),
             _createCollectionTextWithPadding(collections[collectionName].isEmpty ? '' :'rename',
-                    () {
-                      print('TODO renaming...');
-                    }, screenSize),
+                    () => _renameCollection(name), screenSize),
           ],),
           SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -436,6 +432,72 @@ class _HomePageState extends State<HomePage> {
           )
         )]
     );
+  }
+
+  _deleteCollection(name) {
+    showDialog(context: context, builder: (context) {
+      return AlertDialog(
+          title: Text('Are you sure to delete this?'),
+          actions: <Widget>[
+            MaterialButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              elevation: 5.0,
+              child: Text('Yes, Of course.'),
+            ),
+            MaterialButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              elevation: 5.0,
+              child: Text('Nope'),
+            ),
+          ]
+      );
+    }).then((value) {
+      if (value) {
+        setState(() {
+          collections.remove(name);
+        });
+      }
+    });
+  }
+
+  _renameCollection(name) {
+    showDialog(context: context, builder: (context) {
+      TextEditingController controller = TextEditingController();
+      return AlertDialog(
+          title: TextField(
+            autocorrect: false,
+            decoration: InputDecoration(
+                border: InputBorder.none,
+                hintText: 'Enter a new name'
+            ),
+            style: TextStyle(
+              fontSize: 16,
+              fontFamily: 'Montserrat',
+              fontWeight: FontWeight.w500,
+            ),
+            controller: controller,
+          ),
+          actions: <Widget>[
+            MaterialButton(
+              onPressed: () {
+                String newName = controller.text.toString().toLowerCase();
+                if (newName.isNotEmpty) {
+                  Navigator.of(context).pop(newName);
+                }
+              },
+              elevation: 5.0,
+              child: Text('Update'),
+            ),
+          ]
+      );
+    }).then((value) {
+      if (value != null) {
+        setState(() {
+          collections[value] = collections[name];
+          collections.remove(name);
+        });
+      }
+    });
   }
 
   Widget _createCollectionTextWithPadding(title, onTap, screenSize) {
