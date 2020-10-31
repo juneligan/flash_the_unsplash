@@ -490,7 +490,7 @@ class _HomePageState extends State<HomePage> {
           ]
       );
     }).then((value) {
-      if (value != null) {
+      if (value != null && value != name) {
         setState(() {
           collections[value] = collections[name];
           collections.remove(name);
